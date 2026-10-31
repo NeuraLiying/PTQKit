@@ -82,7 +82,17 @@
  def get_blocks(model):
      if model.__class__.__name__ == "LlamaForCausalLM":
          layers = model.model.layers
-@@ -57,7 +132,13 @@
+@@ -33,6 +108,9 @@
+         layers = model.model.layers
+     elif model.__class__.__name__ in _QWEN3_VL_FOR_COND_GEN_NAMES:
+         layers = model.model.language_model.layers
++    elif model.__class__.__name__ in ("Qwen3VLMoeModel", "Qwen3VLModel"):
++        # Inner HF wrapper (ForConditionalGeneration.model)
++        layers = model.language_model.layers
+     elif model.__class__.__name__ == "LlavaLlamaModel":
+         layers = model.llm.model.layers
+     elif isinstance(model, OPTForCausalLM):
+@@ -57,7 +135,13 @@
      model,
      w_bit,
      q_config,
@@ -96,7 +106,7 @@
  
      layers = get_blocks(model)
      for i in tqdm(range(len(layers)), desc="pseudo weight quantization..."):
-@@ -68,6 +149,9 @@
+@@ -68,6 +152,9 @@
                  m.weight.data, n_bits=w_bit, **q_config
              )
              # m.cpu()
@@ -106,7 +116,7 @@
  
  
  def get_module_by_name_suffix(model, module_name: str):
-@@ -91,4 +175,4 @@
+@@ -91,4 +178,4 @@
              father_module = get_module_by_name_suffix(layers[i], '.'.join(n.split(".")[:-1]))
              setattr(father_module, n.split('.')[-1], new_linear)
              del new_linear, m
