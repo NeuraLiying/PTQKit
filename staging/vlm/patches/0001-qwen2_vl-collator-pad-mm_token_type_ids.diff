@@ -1,0 +1,51 @@
+--- qmllm/models/qwen2_vl/qwen2_vl.py.bak_mm_token_pad	2026-10-29 22:52:29.922296379 +0800
++++ qmllm/models/qwen2_vl/qwen2_vl.py	2026-10-29 22:52:29.970296356 +0800
+@@ -340,24 +340,39 @@
+ 
+     def data_collator(self, instances):
+         # qwen2_vl's padding side is left
++        # Convert BatchFeature -> dict so in-place pad is reliable; also pad any
++        # 1D seq-aligned fields (Qwen3-VL adds mm_token_type_ids).
+         pad_id = self.tokenizer.pad_token_id
+         IGNORE_INDEX = -100
++        instances = [dict(feat) for feat in instances]
+         first = instances[0]
+         batch = {}
+ 
+-        batch_lens = [feat['input_ids'].shape for feat in instances]
+-        max_item_length = max(batch_lens)[0]
++        seq_lens = [int(feat['input_ids'].shape[0]) for feat in instances]
++        max_item_length = max(seq_lens)
++        skip_auto_pad = {
++            'input_ids', 'labels', 'attention_mask', 'pixel_values',
++            'image_grid_thw', 'label', 'label_ids', 'sample_id',
++        }
+         for idx in range(len(instances)):
+             feat = instances[idx]
+-            temp_input_ids = torch.LongTensor([pad_id] * max_item_length)
+-            # temp_input_ids[:feat['input_ids'].shape[0]] = feat['input_ids']
+-            temp_input_ids[-feat['input_ids'].shape[0]:] = feat['input_ids']
++            cur_len = seq_lens[idx]
++            temp_input_ids = torch.full((max_item_length,), pad_id, dtype=feat['input_ids'].dtype)
++            temp_input_ids[-cur_len:] = feat['input_ids']
+             feat['input_ids'] = temp_input_ids
+-            temp_labels = torch.LongTensor([IGNORE_INDEX] * max_item_length)
+-            # temp_labels[:feat['labels'].shape[0]] = feat['labels']
+-            temp_labels[-feat['labels'].shape[0]:] = feat['labels']
++            temp_labels = torch.full((max_item_length,), IGNORE_INDEX, dtype=feat['labels'].dtype)
++            temp_labels[-cur_len:] = feat['labels']
+             feat['labels'] = temp_labels
+-            feat['attention_mask'] = feat['input_ids'].ne(pad_id).int()
++            feat['attention_mask'] = feat['input_ids'].ne(pad_id).to(dtype=torch.long)
++            # Pad other 1D tensors that matched the original sequence length
++            # (e.g. mm_token_type_ids from Qwen3-VL processor).
++            for k, v in list(feat.items()):
++                if k in skip_auto_pad:
++                    continue
++                if isinstance(v, torch.Tensor) and v.dim() == 1 and v.shape[0] == cur_len:
++                    padded = torch.zeros((max_item_length,), dtype=v.dtype)
++                    padded[-cur_len:] = v
++                    feat[k] = padded
+ 
+         # Special handling for labels.
+         # Ensure that tensor is created with the correct type

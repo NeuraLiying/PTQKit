@@ -1,0 +1,25 @@
+# Random-text calibration control for EBSS ablation (F5).
+# Same model / length budget as qwen35-35b-a3b.yaml; calib stage swapped.
+
+name: moe-ebss-gguf/qwen35-35b-a3b-random
+model:
+  adapter: hf_moe
+  hf_id: Qwen/Qwen3.5-35B-A3B
+  local_path: ${env:QS_MODEL_ROOT}/Qwen3.5-35B-A3B
+  dtype: bfloat16
+
+pipeline:
+  - stage: random_text_calib
+    num_seqs: 64
+    seqlen: 512
+    seed: 0
+  - stage: text_export
+    format: imatrix_jsonl
+  - stage: eval.expert_coverage
+    plot: true
+
+expected:
+  status: ablation_control
+notes: |
+  Pair with qwen35-35b-a3b.yaml expert_coverage plots / imatrix PPL.
+  Do not claim "EBSS uplift" until this control is published beside it.

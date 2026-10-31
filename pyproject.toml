@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ptqkit"
+version = "0.1.0a0"
+description = "A library for reproducing and improving post-training quantization (PTQ) methods"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.10"
+authors = [{ name = "PTQKit contributors" }]
+keywords = ["quantization", "ptq", "moe", "vlm", "gguf"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+  "pyyaml>=6.0",
+  "typing-extensions>=4.8",
+]
+
+[project.optional-dependencies]
+moe = ["torch", "transformers>=4.45", "tqdm", "safetensors"]
+vision = ["torch", "torchvision", "timm"]
+vlm = ["torch", "transformers>=4.45", "accelerate"]
+dev = ["pytest>=7.0", "ruff>=0.4"]
+all = ["ptqkit[moe,vision,vlm,dev]"]
+
+[project.scripts]
+qs = "ptqkit.cli:main"
+ptqkit = "ptqkit.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/NeuraLiying/PTQKit"
+Repository = "https://github.com/NeuraLiying/PTQKit"
+Issues = "https://github.com/NeuraLiying/PTQKit/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+ptqkit = ["py.typed"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"

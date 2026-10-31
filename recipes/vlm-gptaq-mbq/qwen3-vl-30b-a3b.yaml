@@ -1,0 +1,44 @@
+# VLM hybrid: vision GPTAQ + language MBQ on Qwen3-VL-30B-A3B.
+# Phase1 eval + ablations sealed (fake/pseudo-quant).
+
+name: vlm-gptaq-mbq/qwen3-vl-30b-a3b
+model:
+  adapter: qwen3_vl_moe
+  hf_id: Qwen/Qwen3-VL-30B-A3B-Instruct
+  local_path: ${env:QS_MODEL_ROOT}/Qwen3-VL-30B-A3B
+
+quant_spec: "ViT GPTAQ W4g32A8 (sym) + LLM MBQ W4g128A16 (reweight); embed/lm_head skipped; vision.merger quantized; eval=pseudo_quant; LLM Linear≈Attn only on this build"
+
+pipeline:
+  - stage: image_calib
+    source: coco_captions  # n_samples=16 for MBQ; ViT uses 32-image calib folder
+  - stage: gptaq_vision
+    w_bits: 4
+    groupsize: 32
+    a_bits: 8
+  - stage: mbq_search
+    w_bit: 4
+    w_group: 128
+    a_bit: 16
+    reweight: true
+  - stage: apply.pseudo_quant
+  - stage: eval.lmms
+    tasks: [ai2d, mmmu_val, realworldqa, scienceqa, textvqa_val, vizwiz_vqa_val, mmbench_en_dev]
+
+expected:
+  status: phase1_ablation_sealed
+  same_harness_bf16: required
+  ablations:
+    llm_only: 7/7
+    vit_only: 7/7
+    rtn_probe: TextVQA+MMMU+AI2D
+  gaps:
+    - Not deployment/export numbers
+    - Packed MoE experts not pseudo-quantized (Attn-Linear footnote)
+    - qs run still scaffold — use staging/vlm/scripts
+    - Optional: RTN remaining 4 tasks; official-harness MMMU probe (Roadmap V1.1)
+
+notes: |
+  Reproduce: export QS_WORK=...; bash staging/vlm/scripts/run_quant_*.sh then run_eval_*.sh.
+  Patches: staging/vlm/patches/. Results: results/vlm-gptaq-mbq/.
+  Prefer Phase1 sealed tables under results/vlm-gptaq-mbq/.

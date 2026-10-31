@@ -1,0 +1,1 @@
+"""PTQKit adapters package (scaffold)."""

@@ -1,0 +1,23 @@
+# Conda env for PTQKit GPU host experiments (EBSS / VLM GPTAQ+MBQ).
+# Create: conda env create -f recipes/env/quantstage.environment.yml
+# Activate: conda activate quantstage
+name: quantstage
+channels:
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - pip:
+      - --extra-index-url https://download.pytorch.org/whl/cu126
+      - torch==2.7.0+cu126
+      - torchvision==0.22.0+cu126
+      - transformers==5.21.0
+      - accelerate==1.15.0
+      - safetensors==0.8.0
+      - sentencepiece==0.2.2
+      - protobuf==7.36.2
+      - tqdm==4.70.1
+      - einops==0.8.2
+      - huggingface_hub==2.3.0
+      - pillow==13.0.0
+      - numpy==2.4.6

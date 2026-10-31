@@ -1,0 +1,1 @@
+"""PTQKit core package (scaffold)."""

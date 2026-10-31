@@ -1,0 +1,42 @@
+# FastViT-ma36 W4A4 via FIMA-Q-style calibrate + block reconstruction.
+# Legacy ImageNet Prec@1 83.23 from delivery ckpt log (not yet re-run here; V1 packages legacy only — not an optimization target).
+
+name: fastvit-w4a4/ma36
+model:
+  adapter: fastvit
+  name: fastvit_ma36
+
+data:
+  imagenet_root: ${env:IMAGENET_ROOT}
+
+pipeline:
+  - stage: image_calib
+    size: 128
+    split: train
+    seed: 3407
+  - stage: fimaq_calibrate
+    w_bit: 4
+    a_bit: 4
+    metric: mse
+    config: staging/fastvit/configs/4bit/best.py
+  - stage: fimaq_recon
+    optim_size: 1024
+    metric: fisher_dplr
+    mode: qdrop
+    k: 5
+    dis_mode: q
+    iters: 20000
+    lr: 4.0e-5
+  - stage: eval.imagenet
+    split: val
+
+expected:
+  eval.imagenet.top1:
+    value: 83.23
+    tol: 0.15
+    status: legacy  # reproduced from delivery output.log; FP baseline TBD
+
+notes: |
+  Staging entrypoint: staging/fastvit/fastvit/test_quant_fastvit.py
+  Checkpoints (.pth) are NOT in-repo; pull from future HF assets or local archive.
+  Cite FIMA-Q (Apache-2.0); FastViT patches live under staging/fastvit until fork+submodule.

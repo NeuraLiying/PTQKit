@@ -1,0 +1,35 @@
+--- qmllm/models/qwen3_vl/qwen3_vl.py.bak_deepstack	2026-10-29 22:55:21.714044340 +0800
++++ qmllm/models/qwen3_vl/qwen3_vl.py	2026-10-29 23:00:03.545080568 +0800
+@@ -86,7 +86,8 @@
+             shift_logits = logits[..., :-1, :].contiguous()
+             shift_labels = labels[..., 1:].contiguous()
+             loss_fct = CrossEntropyLoss()
+-            shift_logits = shift_logits.view(-1, self.model.config.vocab_size)
++            # Qwen3-VL MoE keeps vocab_size on text_config, not top-level config
++            shift_logits = shift_logits.view(-1, shift_logits.size(-1))
+             shift_labels = shift_labels.view(-1).to(shift_logits.device)
+             loss = loss_fct(shift_logits, shift_labels)
+         if not return_dict:
+@@ -187,9 +188,19 @@
+             pixel_values = pixel_values.type(visual.get_dtype())
+         else:
+             pixel_values = pixel_values.type(next(visual.parameters()).dtype)
+-        image_embeds = visual(pixel_values, grid_thw=image_grid_thw)
+-        if isinstance(image_embeds, tuple):
+-            image_embeds = image_embeds[0]
++        vision_out = visual(pixel_values, grid_thw=image_grid_thw)
++        # Qwen3-VL visual returns BaseModelOutputWithDeepstackFeatures;
++        # image tokens use pooler_output (merged patches). Fall back for older APIs.
++        if isinstance(vision_out, tuple):
++            image_embeds = vision_out[0]
++        elif hasattr(vision_out, "pooler_output") and vision_out.pooler_output is not None:
++            image_embeds = vision_out.pooler_output
++            if isinstance(image_embeds, (tuple, list)):
++                image_embeds = torch.cat(image_embeds, dim=0)
++        elif hasattr(vision_out, "last_hidden_state"):
++            image_embeds = vision_out.last_hidden_state
++        else:
++            image_embeds = vision_out
+         image_mask = (input_ids == self.model.config.image_token_id).unsqueeze(-1).expand_as(inputs_embeds)
+         image_embeds = image_embeds.to(inputs_embeds.device, inputs_embeds.dtype)
+         inputs_embeds = inputs_embeds.masked_scatter(image_mask, image_embeds)

@@ -1,0 +1,9 @@
+PTQKit
+Copyright 2026 PTQKit contributors
+
+This product includes software developed by PTQKit contributors
+and third-party components. See docs/THIRD_PARTY.md and LICENSE files
+under staging/ and (future) third_party/ for attributions.
+
+Apache License 2.0 applies to first-party PTQKit code unless a
+file states otherwise.
