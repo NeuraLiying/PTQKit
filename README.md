@@ -29,7 +29,9 @@ Three recipes, one DAG vocabulary — each line highlights a different PTQ lever
 
 ### VLM GPTAQ + MBQ (Phase1, sealed)
 
-Model: `Qwen/Qwen3-VL-30B-A3B-Instruct`. Spec: **ViT GPTAQ W4g32A8** + **LLM MBQ W4g128A16** (pseudo-quant). Same lmms-eval harness for BF16 and quant.
+Model: `Qwen/Qwen3-VL-30B-A3B-Instruct`. Spec (Phase1): **ViT GPTAQ W4g32A8** + **LLM MBQ W4g128A16** (pseudo-quant). Same lmms-eval harness for BF16 and quant.
+
+**Coverage honesty:** Phase1 LLM MBQ/RTN only fake-quantizes decoder **`nn.Linear` ≈ Attn q/k/v/o**. Packed MoE experts (`gate_up_proj` / `down_proj`) stay BF16. Effective quantized weight share is about **~5%** of total parameters (ViT ≈0.6B + Attn-Linear ≈0.9B); experts ≈28B are not quantized. Do **not** read the Phase1 table as full W4 MoE-expert quantization. On the Attn-Linear subset, MBQ vs RTN is within noise; ViT GPTAQ vs RTN was not compared in Phase1.
 
 | Task | n | BF16 | GPTAQ+MBQ | Δpt |
 |------|--:|-----:|----------:|----:|
@@ -59,7 +61,7 @@ Ablations (same harness):
 
 - Phase1 GPTAQ+MBQ holds within ~1 pt mean of same-harness BF16; TextVQA is the main outlier (−3.3 pt).
 - TextVQA: ViT-only **79.59** ≈ Full **79.00**; LLM-only **82.08** ≈ BF16 **82.31** → drop is mostly **ViT-side**.
-- LLM RTN/MBQ on this build covers **Attn-Linear** layers; packed MoE experts are not pseudo-quantized (see [`ABLATION_STATUS`](results/vlm-gptaq-mbq/ABLATION_STATUS.md)).
+- LLM RTN/MBQ on this build covers **Attn-Linear** only (~3% of LLM params; ~5% of total with ViT); packed MoE experts are not pseudo-quantized (see [`ABLATION_STATUS`](results/vlm-gptaq-mbq/ABLATION_STATUS.md)). Stage2 adds expert coverage probes.
 - Absolute MMMU/RWQA levels are **not** comparable to official Qwen tables — harness differs ([`HARNESS_VS_OFFICIAL`](staging/vlm/docs/HARNESS_VS_OFFICIAL.md)).
 
 Full provenance: [`PHASE1_TABLE`](results/vlm-gptaq-mbq/PHASE1_TABLE.md) · [`summary.json`](results/vlm-gptaq-mbq/summary.json).

@@ -16,4 +16,4 @@
 - Fake/pseudo weight quant only (`--pseudo_quant`). **No** memory or throughput claim.
 - Artifacts live on the GPU host under `$QS_WORK/runs/vlm_qwen3vl_30b_a3b/scale_cache/` (hashes in `results/vlm-gptaq-mbq/summary.json`).
 
-**LLM coverage (transformers 5.21.0 / Qwen3-VL-MoE):** pseudo-quant walks `nn.Linear` inside decoder layers (Attn q/k/v/o). Packed MoE experts (`gate_up_proj` / `down_proj` Parameters) and router weights are **not** fake-quantized in this Phase1 path. See `results/vlm-gptaq-mbq/ABLATION_STATUS.md`.
+**LLM coverage (transformers 5.21.0 / Qwen3-VL-MoE):** Phase1 pseudo-quant walks `nn.Linear` inside decoder layers (Attn q/k/v/o only). Packed MoE experts (`gate_up_proj` / `down_proj` Parameters) and router weights are **not** fake-quantized. Effective quantized share ≈ **~5%** of total weights (ViT + Attn). See `results/vlm-gptaq-mbq/ABLATION_STATUS.md`. Stage2 adds packed-expert RTN coverage.
