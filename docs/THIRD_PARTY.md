@@ -17,7 +17,7 @@ This document lists upstream projects we depend on, cite, or adapt.
 |-----------|----------|---------|----------------|--------|
 | **FIMA-Q** | [ShiheWang/FIMA-Q](https://github.com/ShiheWang/FIMA-Q) | Apache-2.0 | `staging/fastvit/` (adapted FastViT integration) | `third_party/fima-q` fork + thin adapter |
 | **MBQ** | [thu-nics/MBQ](https://github.com/thu-nics/MBQ) | MIT | **Not included**: External GPU host `$QS_WORK/GPTAQ-MBQ`; patches in `staging/vlm/patches/` | `third_party/mbq` fork + adapter |
-| **GPTAQ-for-vision** | External codebase (location TBD) | **Apache-2.0 (inferred from GPTQ lineage; requires verification)** | **Not included**: External GPU host `$QS_WORK/GPTAQ-MBQ`; patches in `staging/vlm/patches/` apply to `qmllm/` and `quant/vision/` modules | Verify source repository and license before public release |
+| **GPTAQ-for-vision** | External codebase (location TBD) | **License not verified; redistribution status unresolved** | **Not included**: External GPU host `$QS_WORK/GPTAQ-MBQ`; patches in `staging/vlm/patches/` apply to `qmllm/` and `quant/vision/` modules | Source repository and license verification REQUIRED before public release |
 | **llama.cpp** | ggml-org / llama.cpp | MIT | not vendored | optional binary for imatrix / GGUF export |
 | **LLaVA-NeXT** | LLaVA project | follow upstream | **not** vendored (no nested `.git` trees) | submodule if needed for VLM eval |
 | **lmms-eval** | lmms-lab | follow upstream | not vendored (editable under GPTAQ-MBQ `3rdparty/`) | submodule / pip for VLM eval |
@@ -34,8 +34,8 @@ This document lists upstream projects we depend on, cite, or adapt.
   harness note, ablation plan), and patches `0001`–`0005` for external GPU-host
   codebase. Patches modify `qmllm/models/`, `qmllm/methods/rtn/`, `qmllm/methods/mbq/`,
   and `quant/vision/gptaq_vision.py` in external environment. Full MBQ/GPTAQ sources
-  are **not** vendored here. MBQ is MIT (thu-nics/MBQ); GPTAQ-for-vision license
-  requires verification (likely Apache-2.0 from GPTQ lineage). Results: `results/vlm-gptaq-mbq/`.
+  are **not** vendored here. MBQ is MIT (thu-nics/MBQ, verified). GPTAQ-for-vision
+  license and provenance **not verified**; redistribution status unresolved. Results: `results/vlm-gptaq-mbq/`.
 
 ## Data we do **not** redistribute
 
@@ -82,6 +82,8 @@ PTQKit does not include MBQ source code. Patches in `staging/vlm/patches/` are d
 5. **GPTAQ-for-vision source repository and license verification REQUIRED**:
    - Patches apply to external codebase at GPU host `$QS_WORK/GPTAQ-MBQ`
    - Modified modules: `qmllm/models/qwen{2,3}_vl/`, `qmllm/methods/{rtn,mbq}/`, `quant/vision/gptaq_vision.py`
-   - License likely Apache-2.0 (GPTQ lineage) but requires confirmation
+   - **License not verified**; redistribution status unresolved
    - Source repository location unknown (not found on public GitHub/arXiv as standalone project)
-   - Cannot release patches without verifying upstream permits derivative works
+   - PTQKit's Apache-2.0 license does **not** grant redistribution rights to third-party-derived patches
+   - Cannot release `staging/vlm/` patches without upstream license verification and permission
+   - Attribution is **incomplete** until source and license are verified
