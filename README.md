@@ -90,11 +90,11 @@ Expert-coverage σ (64×512 smoke run): EBSS 0.0060 · random 0.0018. Details: [
 
 ## Attribution
 
-- **EBSS** algorithm is from **MoEQuant**. This repo ships an **independent reimplementation** plus engineering. We do **not** claim to have proposed EBSS.
-- **FIMA-Q** (Apache-2.0) underlies the FastViT W4A4 path.
-- **MBQ** (MIT) and GPTAQ/GPTQ lineage underly the VLM path.
+- **EBSS** algorithm is from **MoEQuant** (Frantar et al., 2023). This repo ships an **independent reimplementation** plus engineering. We do **not** claim to have proposed EBSS.
+- **FIMA-Q** ([Apache-2.0](https://github.com/ShiheWang/FIMA-Q)) code adapted in `staging/fastvit/`.
+- **MBQ** ([MIT](https://github.com/thu-nics/MBQ)) and **GPTAQ-for-vision** (license TBD) are **not included**; `staging/vlm/` contains patches for external sources only.
 
-See [`NOTICE`](NOTICE) and [`docs/THIRD_PARTY.md`](docs/THIRD_PARTY.md).
+See [`NOTICE`](NOTICE) and [`docs/THIRD_PARTY.md`](docs/THIRD_PARTY.md) for complete licensing information.
 
 ## 30-minute get-started
 
