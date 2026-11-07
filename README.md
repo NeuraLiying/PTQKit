@@ -27,9 +27,13 @@ Three recipes, one DAG vocabulary — each line highlights a different PTQ lever
 
 ## Results
 
-### VLM GPTAQ + MBQ (Phase1, sealed)
+### VLM Quantization Results
 
-Model: `Qwen/Qwen3-VL-30B-A3B-Instruct`. Spec (Phase1): **ViT GPTAQ W4g32A8** + **LLM MBQ W4g128A16** (pseudo-quant). Same lmms-eval harness for BF16 and quant.
+Model: `Qwen/Qwen3-VL-30B-A3B-Instruct`. Two stages: Phase1 (MBQ calibration) and Stage2 (CLIFF-SPLIT mixed-precision diagnostic).
+
+#### Phase1: GPTAQ + MBQ (sealed)
+
+Spec: **ViT GPTAQ W4g32A8** + **LLM MBQ W4g128A16** (pseudo-quant). Same lmms-eval harness for BF16 and quant.
 
 **Coverage honesty:** Phase1 LLM MBQ/RTN only fake-quantizes decoder **`nn.Linear` ≈ Attn q/k/v/o**. Packed MoE experts (`gate_up_proj` / `down_proj`) stay BF16. Effective quantized weight share is about **~5%** of total parameters (ViT ≈0.6B + Attn-Linear ≈0.9B); experts ≈28B are not quantized. Do **not** read the Phase1 table as full W4 MoE-expert quantization. On the Attn-Linear subset, MBQ vs RTN is within noise; ViT GPTAQ vs RTN was not compared in Phase1.
 
@@ -65,6 +69,22 @@ Ablations (same harness):
 - Absolute MMMU/RWQA levels are **not** comparable to official Qwen tables — harness differs ([`HARNESS_VS_OFFICIAL`](staging/vlm/docs/HARNESS_VS_OFFICIAL.md)).
 
 Full provenance: [`PHASE1_TABLE`](results/vlm-gptaq-mbq/PHASE1_TABLE.md) · [`summary.json`](results/vlm-gptaq-mbq/summary.json).
+
+#### Stage2: CLIFF-SPLIT (observational)
+
+Spec: **ViT BF16** + **Attn RTN W4g128** + **Expert RTN W3g128** (pseudo-quant). Baseline R0 uses W3 attention.
+
+**NOT same-bpw**: Attention changes W3→W4 (+1 bit capacity). This is a **mixed-precision diagnostic**, not an equal-budget method improvement.
+
+| Task | n | R0 (W3 Attn) | CLIFF (W4 Attn) | Δ pp |
+|------|--:|-------------:|----------------:|-----:|
+| TextVQA-val | 5000 | 77.24 | **79.07** | **+1.83** |
+| MMMU-val | 900 | 49.44 | **50.89** | **+1.45** |
+| AI2D-test | 3088 | 82.16 | **84.36** | **+2.20** |
+
+**Mean Δ +1.83 pp** across 3 tasks (attention W3→W4). Fake-quant only; no memory/speedup claim.
+
+Full results: [`STAGE2_CLIFF`](results/vlm-gptaq-mbq/STAGE2_CLIFF.md). Evidence from external environment; not freshly reproduced in this tree.
 
 ### FastViT W4A4 (FIMA-Q)
 
