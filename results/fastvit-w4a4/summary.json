@@ -1,0 +1,54 @@
+{
+  "recipe": "fastvit-w4a4/ma36",
+  "status": "reported",
+  "source": {
+    "delivery_relpath": "Fastvit-quant/checkpoints/W4A4/fastvit_ma36-20260316_1329/output.log",
+    "evidence": "final ImageNet val line: '* Prec@1 83.230 Prec@5 96.450'",
+    "run_flags": {
+      "model": "fastvit_ma36",
+      "w_bit": 4,
+      "a_bit": 4,
+      "quant_act": true,
+      "skip_fp_eval": true,
+      "calib_size": 128,
+      "optim_size": 1024,
+      "optim_metric": "fisher_dplr",
+      "optim_mode": "qdrop",
+      "k": 5,
+      "dis_mode": "q",
+      "seed": 3407,
+      "pretrained": "timm/fastvit_ma36.apple_in1k"
+    }
+  },
+  "metrics": {
+    "imagenet.top1_after_recon": {
+      "value": 83.23,
+      "unit": "percent",
+      "split": "val",
+      "model": "fastvit_ma36",
+      "bits": "W4A4",
+      "reproduced_in_this_tree": false,
+      "tol": 0.15
+    },
+    "imagenet.top5_after_recon": {
+      "value": 96.45,
+      "unit": "percent",
+      "split": "val",
+      "reproduced_in_this_tree": false
+    },
+    "imagenet.top1_after_calib_only": {
+      "value": 72.36,
+      "unit": "percent",
+      "split": "val",
+      "notes": "W4A4 after MSE calib, before block reconstruction",
+      "reproduced_in_this_tree": false
+    }
+  },
+  "gaps": [
+    "FP baseline missing: packaged run used skip_fp_eval=True; no FP Prec@1 in output.log",
+    "t8 / s12 smaller-model numbers not packaged",
+    "checkpoints (.pth) intentionally out of git; future HF assets"
+  ],
+  "notes": "Headline Prec@1 83.23 is post fisher_dplr block reconstruction on ImageNet val. Do not claim fresh reproduction until qs run matches 83.23\u00b10.15.",
+  "v1_status_note": "ImageNet W4A4 numbers from packaged run log; FP baseline not logged (skip_fp_eval)."
+}

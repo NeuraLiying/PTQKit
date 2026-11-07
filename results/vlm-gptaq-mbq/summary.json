@@ -1,0 +1,541 @@
+{
+  "recipe": "vlm-gptaq-mbq/qwen3-vl-30b-a3b",
+  "status": "phase1_ablation_sealed",
+  "canonical_model": "Qwen/Qwen3-VL-30B-A3B-Instruct",
+  "model_local_note": "$QS_WORK/models/Qwen3-VL-30B-A3B (HF Instruct weights)",
+  "quant_spec_one_liner": "ViT GPTAQ W4g32A8 (sym) + LLM MBQ W4g128A16 (reweight, pseudo-quant); skip embed/lm_head (outside blocks); vision.merger quantized; router/gate not separately forced-skipped",
+  "harness": {
+    "name": "lmms-eval (editable under GPTAQ-MBQ/3rdparty/lmms-eval)",
+    "model_wrapper": "qwen3_vl_moe \u2192 qwen3_vl.py",
+    "default_max_new_tokens": 128,
+    "default_temperature": 0,
+    "max_pixels": "unset (processor default)",
+    "batch_size": 1,
+    "thinking_mode": false,
+    "note": "Same harness for BF16 and quant; NOT aligned to official Qwen report settings."
+  },
+  "env": {
+    "host": "gpu-host",
+    "conda": "quantstage",
+    "torch": "2.7.0+cu126",
+    "transformers": "5.21.0",
+    "python": "3.11.18",
+    "work_dir": "$QS_WORK",
+    "run_dir": "runs/vlm_qwen3vl_30b_a3b",
+    "timezone": "Asia/Shanghai (CST, UTC+8)"
+  },
+  "artifacts": {
+    "vision_gptaq_pt": {
+      "path": "runs/vlm_qwen3vl_30b_a3b/scale_cache/vision_gptaq.pt",
+      "bytes": 1077507032,
+      "sha256": "6b69bb87c3fbc948ba9a2f9387e0fe152fc60135a49b8a9022f10bf62938b53d",
+      "mtime_cst": "2026-10-29 21:15"
+    },
+    "mbq_scales_pt": {
+      "path": "runs/vlm_qwen3vl_30b_a3b/scale_cache/mbq_scales.pt",
+      "bytes": 221365,
+      "sha256": "65c0fa040b0aa03d389e6d64597b46b6c580d5419daa162200837e60bddb4426",
+      "mtime_cst": "2026-10-29 23:06",
+      "n_layers_in_scale_list": 48
+    },
+    "scripts_sha256": {
+      "run_quant_gptaq_mbq_qwen3vl30b.sh": "0dfbf03969622dfd0290937e3285733ce2059150552752aa016ed3d219b4230d",
+      "run_eval_gptaq_mbq_qwen3vl30b.sh": "0d649f3022a1830312b4b4795afd67db452b709316299b551af6fc7e655ce946",
+      "run_step2_mbq_only.sh": "1e3046a192991e8c562a6fd25402bd53234aa5a35b3913ad83c15a09faf64f03"
+    },
+    "patched_sources_sha256": {
+      "qmllm/models/qwen2_vl/qwen2_vl.py": "7eb5e2c3800bcf41cf228160c715e5bb875ad55eb4a40303ac5591009e4a03d8",
+      "qmllm/models/qwen3_vl/qwen3_vl.py": "84352f00f44af995d7697cca5ab43a4f93f8040b66867f42186b52fb2284b362",
+      "main.py": "42d25fc202a0184cfb449de46d7e27aaa4cfba8360552f307b56335f31bb6df4",
+      "quant/vision/gptaq_vision.py": "660f0969e6df5570eb37e2775118bff60ce212b4ce6c372ccdcc3af977311d9b",
+      "qmllm/methods/mbq/entry.py": "0f7171803c9d9562144f692ee20d5e0f12c688d59aa8df41254b0b748153e9ea"
+    }
+  },
+  "quant_config": {
+    "vision": {
+      "method": "gptaq",
+      "w_bits": 4,
+      "groupsize": 32,
+      "sym": true,
+      "a_bits": 8,
+      "a_groupsize": -1,
+      "calib": "32 images under QS_WORK/datasets/vit_calib (script flag imagenet_root; source flag may say imagenet)",
+      "includes_merger": true
+    },
+    "llm": {
+      "method": "mbq",
+      "w_bit": 4,
+      "w_group": 128,
+      "a_bit": 16,
+      "reweight": true,
+      "calib": "coco captions, n_samples=16, data/coco.json + QS_WORK/datasets",
+      "pseudo_quant_at_eval": true,
+      "skipped": "embed* and lm_head/output (not in transformer block linears; EMBEDDING_KEYWORDS/LM_HEAD_KEYWORDS present in MBQ quantizer)",
+      "n_blocks_scaled": 48
+    },
+    "eval_mode": "accuracy study under simulated / fake quantization \u2014 no mem/throughput claim"
+  },
+  "methods": {
+    "bf16": {
+      "ai2d": {
+        "value_pct": 85.62,
+        "raw": 0.8562176165803109,
+        "metric": "exact_match,flexible-extract",
+        "stderr": 0.006315047245759827,
+        "n": 3088,
+        "results_json": "eval/bf16/bf16_AI2D/models__Qwen3-VL-30B-A3B/20261030_171903_results.json",
+        "run_id": "20261030_171903"
+      },
+      "mmmu_val": {
+        "value_pct": 54.56,
+        "raw": 0.54556,
+        "metric": "mmmu_acc,none",
+        "stderr": null,
+        "n": 900,
+        "results_json": "eval/bf16/bf16_MMMU/models__Qwen3-VL-30B-A3B/20261030_175236_results.json",
+        "run_id": "20261030_175236"
+      },
+      "realworldqa": {
+        "value_pct": 65.1,
+        "raw": 0.6509803921568628,
+        "metric": "exact_match,flexible-extract",
+        "stderr": 0.017244959851893102,
+        "n": 765,
+        "results_json": "eval/bf16/bf16_RealWorldQA/models__Qwen3-VL-30B-A3B/20261030_180832_results.json",
+        "run_id": "20261030_180832"
+      },
+      "scienceqa": {
+        "value_pct": 93.99,
+        "raw": 0.9398726715397312,
+        "metric": "exact_match,none",
+        "stderr": 0.003650795753025351,
+        "n": 4241,
+        "results_json": "eval/bf16/bf16_ScienceQA/models__Qwen3-VL-30B-A3B/20261030_181915_results.json",
+        "run_id": "20261030_181915"
+      },
+      "textvqa_val": {
+        "value_pct": 82.31,
+        "raw": 0.8231400000000045,
+        "metric": "exact_match,none",
+        "stderr": 0.004912731935187753,
+        "n": 5000,
+        "results_json": "eval/bf16/bf16_TextVQA/models__Qwen3-VL-30B-A3B/20261030_191052_results.json",
+        "run_id": "20261030_191052"
+      },
+      "vizwiz_vqa_val": {
+        "value_pct": 69.97,
+        "raw": 0.6997221579069248,
+        "metric": "exact_match,none",
+        "stderr": 0.006228453749471067,
+        "n": 4319,
+        "results_json": "eval/bf16/bf16_VizWiz/models__Qwen3-VL-30B-A3B/20261030_200345_results.json",
+        "run_id": "20261030_200345"
+      },
+      "mmbench_en_dev": {
+        "value_pct": 86.94,
+        "raw": 86.94158075601375,
+        "metric": "gpt_eval_score,none",
+        "stderr": null,
+        "n": 4329,
+        "results_json": "eval/bf16/bf16_MMBench/models__Qwen3-VL-30B-A3B/20261030_211722_results.json",
+        "run_id": "20261030_211722"
+      }
+    },
+    "gptaq_mbq": {
+      "ai2d": {
+        "value_pct": 84.91,
+        "raw": 0.8490932642487047,
+        "metric": "exact_match,flexible-extract",
+        "stderr": 0.0064426374925774564,
+        "n": 3088,
+        "results_json": "eval/gptaq_mbq/quant_AI2D/models__Qwen3-VL-30B-A3B/20261030_024254_results.json",
+        "run_id": "20261030_024254"
+      },
+      "mmmu_val": {
+        "value_pct": 54.0,
+        "raw": 0.54,
+        "metric": "mmmu_acc,none",
+        "stderr": null,
+        "n": 900,
+        "results_json": "eval/gptaq_mbq/quant_MMMU/models__Qwen3-VL-30B-A3B/20261030_031942_results.json",
+        "run_id": "20261030_031942"
+      },
+      "realworldqa": {
+        "value_pct": 65.75,
+        "raw": 0.657516339869281,
+        "metric": "exact_match,flexible-extract",
+        "stderr": 0.01716826956743262,
+        "n": 765,
+        "results_json": "eval/gptaq_mbq/quant_RealWorldQA/models__Qwen3-VL-30B-A3B/20261030_033605_results.json",
+        "run_id": "20261030_033605"
+      },
+      "scienceqa": {
+        "value_pct": 92.78,
+        "raw": 0.9278472058476774,
+        "metric": "exact_match,none",
+        "stderr": 0.003973579265751638,
+        "n": 4241,
+        "results_json": "eval/gptaq_mbq/quant_ScienceQA/models__Qwen3-VL-30B-A3B/20261030_034846_results.json",
+        "run_id": "20261030_034846"
+      },
+      "textvqa_val": {
+        "value_pct": 79.0,
+        "raw": 0.7899800000000048,
+        "metric": "exact_match,none",
+        "stderr": 0.005329728053120739,
+        "n": 5000,
+        "results_json": "eval/gptaq_mbq/quant_TextVQA/models__Qwen3-VL-30B-A3B/20261030_044243_results.json",
+        "run_id": "20261030_044243"
+      },
+      "vizwiz_vqa_val": {
+        "value_pct": 69.07,
+        "raw": 0.6907154433896758,
+        "metric": "exact_match,none",
+        "stderr": 0.006286714119709326,
+        "n": 4319,
+        "results_json": "eval/gptaq_mbq/quant_VizWiz/models__Qwen3-VL-30B-A3B/20261030_054108_results.json",
+        "run_id": "20261030_054108"
+      },
+      "mmbench_en_dev": {
+        "value_pct": 85.14,
+        "raw": 85.13745704467354,
+        "metric": "gpt_eval_score,none",
+        "stderr": null,
+        "n": 4329,
+        "results_json": "eval/gptaq_mbq/quant_MMBench/models__Qwen3-VL-30B-A3B/20261030_070555_results.json",
+        "run_id": "20261030_070555"
+      }
+    },
+    "vit_only_partial": {
+      "status": "partial_archive",
+      "note": "Early eval with --skip_llm_quant + load_vision (ViT GPTAQ only). Completed MMMU/ScienceQA/TextVQA; AI2D/RWQA/VizWiz/MMBench failed on HF CDN timeouts before scores. Archived under eval/gptaq_mbq_vit_only_or_partial_20261030_024202",
+      "scores": {
+        "ai2d": null,
+        "mmmu_val": {
+          "value_pct": 54.33,
+          "raw": 0.54333,
+          "metric": "mmmu_acc,none",
+          "stderr": null,
+          "n": 900,
+          "results_json": "eval/gptaq_mbq_vit_only_or_partial_20261030_024202/quant_MMMU/models__Qwen3-VL-30B-A3B/20261029_231149_results.json",
+          "run_id": "20261029_231149"
+        },
+        "realworldqa": null,
+        "scienceqa": {
+          "value_pct": 93.59,
+          "raw": 0.9358641829757133,
+          "metric": "exact_match,none",
+          "stderr": 0.0037624765403554113,
+          "n": 4241,
+          "results_json": "eval/gptaq_mbq_vit_only_or_partial_20261030_024202/quant_ScienceQA/models__Qwen3-VL-30B-A3B/20261029_234016_results.json",
+          "run_id": "20261029_234016"
+        },
+        "textvqa_val": {
+          "value_pct": 79.59,
+          "raw": 0.7958600000000045,
+          "metric": "exact_match,none",
+          "stderr": 0.0052794835608545145,
+          "n": 5000,
+          "results_json": "eval/gptaq_mbq_vit_only_or_partial_20261030_024202/quant_TextVQA/models__Qwen3-VL-30B-A3B/20261030_003434_results.json",
+          "run_id": "20261030_003434"
+        },
+        "vizwiz_vqa_val": null,
+        "mmbench_en_dev": null
+      }
+    },
+    "llm_only": {
+      "status": "complete",
+      "note": "LLM MBQ only (ViT bf16); 7/7 tasks complete.",
+      "scores": {
+        "ai2d": {
+          "value_pct": 85.1,
+          "raw": 0.8510362694300518,
+          "metric": "exact_match,flexible-extract",
+          "stderr": 0.00640834655634443,
+          "n": 3088,
+          "results_json": "eval/ablation_llm_only/llm_only_ai2d/models__Qwen3-VL-30B-A3B/20261031_054553_results.json",
+          "run_id": "20261031_054553"
+        },
+        "mmmu_val": {
+          "value_pct": 54.44,
+          "raw": 0.54444,
+          "metric": "mmmu_acc,none",
+          "stderr": null,
+          "n": 900,
+          "results_json": "eval/ablation_llm_only/llm_only_mmmu_val/models__Qwen3-VL-30B-A3B/20261031_061920_results.json",
+          "run_id": "20261031_061920"
+        },
+        "realworldqa": {
+          "value_pct": 65.62,
+          "raw": 0.6562091503267974,
+          "metric": "exact_match,flexible-extract",
+          "stderr": 0.017183895318494936,
+          "n": 765,
+          "results_json": "eval/ablation_llm_only/llm_only_realworldqa/models__Qwen3-VL-30B-A3B/20261031_063458_results.json",
+          "run_id": "20261031_063458"
+        },
+        "scienceqa": {
+          "value_pct": 93.42,
+          "raw": 0.9342136288611177,
+          "metric": "exact_match,none",
+          "stderr": 0.00380722143120695,
+          "n": 4241,
+          "results_json": "eval/ablation_llm_only/llm_only_scienceqa/models__Qwen3-VL-30B-A3B/20261031_064542_results.json",
+          "run_id": "20261031_064542"
+        },
+        "textvqa_val": {
+          "value_pct": 82.08,
+          "raw": 0.8207600000000048,
+          "metric": "exact_match,none",
+          "stderr": 0.004939097429357297,
+          "n": 5000,
+          "results_json": "eval/ablation_llm_only/llm_only_textvqa_val/models__Qwen3-VL-30B-A3B/20261031_042938_results.json",
+          "run_id": "20261031_042938"
+        },
+        "vizwiz_vqa_val": {
+          "value_pct": 69.64,
+          "raw": 0.6964112062977555,
+          "metric": "exact_match,none",
+          "stderr": 0.006242104355482636,
+          "n": 4319,
+          "results_json": "eval/ablation_llm_only/llm_only_vizwiz_vqa_val/models__Qwen3-VL-30B-A3B/20261031_073804_results.json",
+          "run_id": "20261031_073804"
+        },
+        "mmbench_en_dev": {
+          "value_pct": 86.25,
+          "raw": 86.25429553264605,
+          "metric": "gpt_eval_score,none",
+          "stderr": null,
+          "n": 4329,
+          "results_json": "$QS_WORK/runs/vlm_qwen3vl_30b_a3b/eval/ablation_llm_only/llm_only_mmbench_en_dev/models__Qwen3-VL-30B-A3B/20261031_085211_results.json",
+          "run_id": "models__Qwen3-VL-30B-A3B"
+        }
+      },
+      "interpretation_textvqa": "LLM-only TextVQA 82.08 \u2248 BF16 82.31; ViT-only 79.59 \u2248 Full \u2192 drop mostly ViT-side."
+    },
+    "rtn": {
+      "status": "phase1_min_complete_3of7",
+      "note": "alias of rtn_probe; Attn-Linear-only footnote applies",
+      "scores": {
+        "textvqa_val": {
+          "value_pct": 78.91,
+          "raw": 0.7890600000000046,
+          "metric": "exact_match,none",
+          "stderr": 0.0053502699331595335,
+          "n": 5000,
+          "results_json": "eval/ablation_rtn_probe/rtn_probe_textvqa_val/models__Qwen3-VL-30B-A3B/20261031_171122_results.json",
+          "run_id": "20261031_171122"
+        },
+        "mmmu_val": {
+          "value_pct": 54.33,
+          "raw": 0.54333,
+          "metric": "mmmu_acc,none",
+          "stderr": null,
+          "n": 900,
+          "results_json": "eval/ablation_rtn_probe/rtn_probe_mmmu_val/models__Qwen3-VL-30B-A3B/20261031_181050_results.json",
+          "run_id": "20261031_181050"
+        },
+        "ai2d": {
+          "value_pct": 84.52,
+          "raw": 0.8452072538860104,
+          "metric": "exact_match,flexible-extract",
+          "stderr": 0.006510114028661313,
+          "n": 3088,
+          "results_json": "eval/ablation_rtn_probe/rtn_probe_ai2d/models__Qwen3-VL-30B-A3B/20261031_182710_results.json",
+          "run_id": "20261031_182710"
+        }
+      }
+    },
+    "vit_only": {
+      "status": "complete",
+      "scores": {
+        "mmmu_val": {
+          "value_pct": 54.33,
+          "raw": 0.54333,
+          "metric": "mmmu_acc,none",
+          "stderr": null,
+          "n": 900,
+          "results_json": "eval/gptaq_mbq_vit_only_or_partial_20261030_024202/quant_MMMU/models__Qwen3-VL-30B-A3B/20261029_231149_results.json",
+          "run_id": "20261029_231149"
+        },
+        "scienceqa": {
+          "value_pct": 93.59,
+          "raw": 0.9358641829757133,
+          "metric": "exact_match,none",
+          "stderr": 0.0037624765403554113,
+          "n": 4241,
+          "results_json": "eval/gptaq_mbq_vit_only_or_partial_20261030_024202/quant_ScienceQA/models__Qwen3-VL-30B-A3B/20261029_234016_results.json",
+          "run_id": "20261029_234016"
+        },
+        "textvqa_val": {
+          "value_pct": 79.59,
+          "raw": 0.7958600000000045,
+          "metric": "exact_match,none",
+          "stderr": 0.0052794835608545145,
+          "n": 5000,
+          "results_json": "eval/gptaq_mbq_vit_only_or_partial_20261030_024202/quant_TextVQA/models__Qwen3-VL-30B-A3B/20261030_003434_results.json",
+          "run_id": "20261030_003434"
+        },
+        "ai2d": {
+          "value_pct": 85.23,
+          "raw": 0.8523316062176166,
+          "metric": "exact_match,flexible-extract",
+          "stderr": 0.006385277224084746,
+          "n": 3088,
+          "results_json": "eval/ablation_vit_only/vit_only_ai2d/models__Qwen3-VL-30B-A3B/20261031_095233_results.json",
+          "run_id": "20261031_095233"
+        },
+        "realworldqa": {
+          "value_pct": 64.18,
+          "raw": 0.6418300653594772,
+          "metric": "exact_match,flexible-extract",
+          "stderr": 0.017346342333650212,
+          "n": 765,
+          "results_json": "eval/ablation_vit_only/vit_only_realworldqa/models__Qwen3-VL-30B-A3B/20261031_102855_results.json",
+          "run_id": "20261031_102855"
+        },
+        "vizwiz_vqa_val": {
+          "value_pct": 69.76,
+          "raw": 0.6976151887010906,
+          "metric": "exact_match,none",
+          "stderr": 0.006236135879616431,
+          "n": 4319,
+          "results_json": "eval/ablation_vit_only/vit_only_vizwiz_vqa_val/models__Qwen3-VL-30B-A3B/20261031_104107_results.json",
+          "run_id": "20261031_104107"
+        },
+        "mmbench_en_dev": {
+          "value_pct": 85.74,
+          "raw": 85.73883161512028,
+          "metric": "gpt_eval_score,none",
+          "stderr": null,
+          "n": 4329,
+          "results_json": "eval/ablation_vit_only/vit_only_mmbench_en_dev/models__Qwen3-VL-30B-A3B/20261031_120314_results.json",
+          "run_id": "20261031_120314"
+        }
+      }
+    },
+    "rtn_probe": {
+      "status": "phase1_min_complete_3of7",
+      "note": "Phase1 min RTN probe complete (TextVQA+MMMU+AI2D); Attn-Linear-only footnote applies; other 4 tasks not planned for RTN",
+      "scores": {
+        "textvqa_val": {
+          "value_pct": 78.91,
+          "raw": 0.7890600000000046,
+          "metric": "exact_match,none",
+          "stderr": 0.0053502699331595335,
+          "n": 5000,
+          "results_json": "eval/ablation_rtn_probe/rtn_probe_textvqa_val/models__Qwen3-VL-30B-A3B/20261031_171122_results.json",
+          "run_id": "20261031_171122"
+        },
+        "mmmu_val": {
+          "value_pct": 54.33,
+          "raw": 0.54333,
+          "metric": "mmmu_acc,none",
+          "stderr": null,
+          "n": 900,
+          "results_json": "eval/ablation_rtn_probe/rtn_probe_mmmu_val/models__Qwen3-VL-30B-A3B/20261031_181050_results.json",
+          "run_id": "20261031_181050"
+        },
+        "ai2d": {
+          "value_pct": 84.52,
+          "raw": 0.8452072538860104,
+          "metric": "exact_match,flexible-extract",
+          "stderr": 0.006510114028661313,
+          "n": 3088,
+          "results_json": "eval/ablation_rtn_probe/rtn_probe_ai2d/models__Qwen3-VL-30B-A3B/20261031_182710_results.json",
+          "run_id": "20261031_182710"
+        }
+      }
+    },
+    "vit_only_archive": {
+      "status": "partial_3of7",
+      "scores": {
+        "mmmu_val": {
+          "value_pct": 54.33,
+          "raw": 0.54333,
+          "metric": "mmmu_acc,none",
+          "stderr": null,
+          "n": 900,
+          "results_json": "eval/gptaq_mbq_vit_only_or_partial_20261030_024202/quant_MMMU/models__Qwen3-VL-30B-A3B/20261029_231149_results.json",
+          "run_id": "20261029_231149"
+        },
+        "scienceqa": {
+          "value_pct": 93.59,
+          "raw": 0.9358641829757133,
+          "metric": "exact_match,none",
+          "stderr": 0.0037624765403554113,
+          "n": 4241,
+          "results_json": "eval/gptaq_mbq_vit_only_or_partial_20261030_024202/quant_ScienceQA/models__Qwen3-VL-30B-A3B/20261029_234016_results.json",
+          "run_id": "20261029_234016"
+        },
+        "textvqa_val": {
+          "value_pct": 79.59,
+          "raw": 0.7958600000000045,
+          "metric": "exact_match,none",
+          "stderr": 0.0052794835608545145,
+          "n": 5000,
+          "results_json": "eval/gptaq_mbq_vit_only_or_partial_20261030_024202/quant_TextVQA/models__Qwen3-VL-30B-A3B/20261030_003434_results.json",
+          "run_id": "20261030_003434"
+        }
+      }
+    }
+  },
+  "table_pct": {
+    "task": [
+      "AI2D",
+      "MMMU-val",
+      "RealWorldQA",
+      "ScienceQA",
+      "TextVQA-val",
+      "VizWiz-val",
+      "MMBench-EN-dev"
+    ],
+    "bf16": [
+      85.62,
+      54.56,
+      65.1,
+      93.99,
+      82.31,
+      69.97,
+      86.94
+    ],
+    "gptaq_mbq": [
+      84.91,
+      54.0,
+      65.75,
+      92.78,
+      79.0,
+      69.07,
+      85.14
+    ],
+    "delta_pt": [
+      -0.71,
+      -0.56,
+      0.65,
+      -1.21,
+      -3.31,
+      -0.9,
+      -1.8
+    ],
+    "vit_only_partial": [
+      null,
+      54.33,
+      null,
+      93.59,
+      79.59,
+      null,
+      null
+    ],
+    "unit": "percent"
+  },
+  "mean_delta_pt_7task": -1.12,
+  "official_score_gap_note": "docs in staging/vlm/docs/HARNESS_VS_OFFICIAL.md",
+  "packaged_at_cst": "2026-10-31 19:09 CST",
+  "gaps_remaining": [],
+  "phase1_seal": {
+    "sealable": true,
+    "criteria": "llm_only\u00d77 + vit_only\u00d77 + rtn TextVQA+MMMU+AI2D",
+    "sealed_at_cst": "2026-10-31 19:09 CST",
+    "rtn_ai2d_pct": 84.52
+  }
+}

@@ -1,0 +1,47 @@
+# caches / build
+.qs_cache/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# envs / secrets
+.venv/
+venv/
+.env
+secrets-quarantine/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+
+# weights & large dumps (never commit)
+*.pth
+*.pt
+*.dat
+*.gguf
+*.safetensors
+staging/**/checkpoints/
+**/eval_results/**/*_samples*
+**/runs/
+**/logs/
+*.bak
+*.bak_*
+*.log
+
+# local analysis scratch (keep summaries in results/)
+analysis/
+
+# local / process leftovers
+docs/history/
+*_scores_raw_dump*
+*.plan.md
+secrets/
+*.pem
+*.key
+HF_TOKEN

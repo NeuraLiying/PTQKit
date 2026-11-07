@@ -1,0 +1,135 @@
+{
+  "recipe": "moe-ebss-gguf/qwen35-35b-a3b",
+  "status": "phase1_eval_done",
+  "model": "Qwen/Qwen3.5-35B-A3B",
+  "env": {
+    "host": "gpu-host",
+    "conda": "quantstage",
+    "torch": "2.7.0+cu126",
+    "transformers": "5.21.0",
+    "llama_cpp": "0.8.0-dev commit 7df8b87",
+    "work_dir": "$QS_WORK"
+  },
+  "runs": {
+    "ebss_smoke": {
+      "path": "runs/ebss_qwen35_35b_a3b_smoke",
+      "status": "DONE",
+      "num_seqs": 64,
+      "seqlen": 512,
+      "w": 4,
+      "wall_clock": "~3h50m",
+      "artifacts": [
+        "calib.jsonl",
+        "calib.pt",
+        "calib.txt"
+      ]
+    },
+    "random_smoke": {
+      "path": "runs/ebss_qwen35_35b_a3b_random_smoke",
+      "status": "DONE",
+      "num_seqs": 64,
+      "seqlen": 512,
+      "mode": "random_topk",
+      "wall_clock": "~54m",
+      "artifacts": [
+        "calib.jsonl",
+        "calib.pt",
+        "calib.txt"
+      ]
+    },
+    "tiny_smoke": {
+      "path": "runs/ebss_qwen35_35b_a3b_tinysmoke",
+      "status": "DONE",
+      "num_seqs": 2,
+      "seqlen": 32
+    },
+    "imatrix": {
+      "ebss": {
+        "dat": "runs/imatrix/imatrix_ebss.dat",
+        "imatrix_ppl_calib": 1.4441
+      },
+      "random": {
+        "dat": "runs/imatrix/imatrix_random.dat",
+        "imatrix_ppl_calib": 4.2701
+      },
+      "note": "imatrix-PPL is on each method's own calib text \u2014 NOT comparable across methods"
+    },
+    "gguf": {
+      "bf16": "gguf/Qwen3.5-35B-A3B-bf16.gguf",
+      "q4km_ebss": "gguf/Qwen3.5-35B-A3B-Q4_K_M-ebss.gguf",
+      "q4km_random": "gguf/Qwen3.5-35B-A3B-Q4_K_M-random.gguf",
+      "bpw_q4km": 4.89
+    },
+    "eval_wikitext2": {
+      "corpus": "wikitext-2-raw/wiki.test.raw",
+      "held_out": true,
+      "n_ctx": 512,
+      "chunks": 580,
+      "hf_tokenizer_tokens": 297193,
+      "report": "runs/eval_q4km_ebss_vs_random.md"
+    }
+  },
+  "metrics": {
+    "expert_coverage": {
+      "status": "DONE",
+      "cite": "runs/compare_ebss_vs_random_qwen35.md",
+      "ebss": {
+        "mean_touched": 255.8,
+        "mean_entropy_bits": 6.9527,
+        "global_sigma": 0.005976
+      },
+      "random": {
+        "mean_touched": 256.0,
+        "mean_entropy_bits": 7.858,
+        "global_sigma": 0.001814
+      },
+      "finding": "At 64x512 smoke, Random more balanced (lower sigma, higher entropy)."
+    },
+    "imatrix": {
+      "status": "DONE",
+      "ebss_imatrix_ppl_calib": 1.4441,
+      "random_imatrix_ppl_calib": 4.2701,
+      "notes": "calib-text PPL only; do not claim uplift from this gap"
+    },
+    "gguf": {
+      "status": "DONE",
+      "type": "Q4_K_M",
+      "variants": [
+        "ebss",
+        "random"
+      ],
+      "bf16_export": true
+    },
+    "downstream_eval": {
+      "status": "DONE",
+      "task": "llama-perplexity WikiText-2 test",
+      "ppl": {
+        "bf16": {
+          "ppl": 6.5339,
+          "stderr": 0.04157,
+          "wall_s": 187.75
+        },
+        "q4km_ebss": {
+          "ppl": 6.6246,
+          "stderr": 0.04242,
+          "wall_s": 102.57
+        },
+        "q4km_random": {
+          "ppl": 6.6206,
+          "stderr": 0.04225,
+          "wall_s": 104.1
+        }
+      },
+      "delta_ebss_minus_random": 0.004,
+      "finding": "Q4 EBSS vs random held-out WikiText-2 PPL within stderr (\u0394\u22480.004)."
+    }
+  },
+  "gaps": [
+    "Do not headline prior DeepSeek MMLU-Pro ~13% (near chance)",
+    "Smoke-scale EBSS vs random: WikiText-2 PPL within stderr (see metrics)",
+    "Phase2 optimization not started",
+    "imatrix-PPL gap (1.44 vs 4.27) is calib difficulty, not quality"
+  ],
+  "notes": "Phase1 MoE pipeline complete on gpu-host (conda quantstage): calib -> coverage -> imatrix -> Q4_K_M GGUF -> held-out WikiText-2 PPL (+ bf16 ref) + gen smoke. Weights/GGUF stay outside git.",
+  "v1_status_note": "Phase1 smoke closed; not a V1 optimization target."
+}

@@ -1,0 +1,79 @@
+{
+  "evidence_kind": "Summary observations; original raw results now included under server-export, path-sanitized only and hash-mapped to server originals.",
+  "model": "Qwen3-VL-30B-A3B",
+  "recipe": {
+    "R0": "ViT BF16 + Attn RTN W3g128 + Expert RTN W3g128",
+    "CLIFF": "ViT BF16 + Attn RTN W4g128 + Expert RTN W3g128",
+    "activation_bits": 16,
+    "pseudo_quant": true,
+    "calibration": "No calibration flags in CLIFF queue; RTN path. Model revision/hash not collected."
+  },
+  "comparison_caveats": [
+    "NOT same-bpw: attention changes W3 to W4. Do not present as equal-budget method improvement.",
+    "Exact parameter allocation / average-bpw accounting not collected; log confirms 96 expert tensors, not their numel.",
+    "Raw result model_args differ: R0 includes max_memory_per_gpu=11511MiB; CLIFF omits that argument. Both device_map=auto and use_flash_attention_2=False.",
+    "Elapsed evaluation times are existing raw metadata, NOT matched hardware throughput or peak-memory benchmarks. Do not infer speedup.",
+    "Same task hashes were observed for each R0/CLIFF pair; git_hash=null in all six results."
+  ],
+  "common_config": {
+    "batch_size": "1",
+    "random_seed": 0,
+    "numpy_seed": 1234,
+    "torch_seed": 1234,
+    "fewshot_seed": 1234,
+    "bootstrap_iters": 100000
+  },
+  "rows": [
+    {
+      "task": "textvqa_val",
+      "split": "validation",
+      "original": 5000,
+      "effective": 5000,
+      "limit": null,
+      "n_shot": 0,
+      "metric": "exact_match,none",
+      "R0_score": 0.7724000000000034,
+      "CLIFF_score": 0.7907200000000038,
+      "delta_percentage_points": 1.8320000000000336,
+      "R0_evaluation_seconds": 10302.979294262012,
+      "CLIFF_evaluation_seconds": 3280.0815121870255,
+      "R0_source_basename": "20261101_041110_results.json",
+      "CLIFF_source_basename": "20261105_043034_results.json"
+    },
+    {
+      "task": "mmmu_val",
+      "split": "validation",
+      "original": 900,
+      "effective": 900,
+      "limit": null,
+      "n_shot": 0,
+      "metric": "mmmu_acc,none",
+      "R0_score": 0.49444,
+      "CLIFF_score": 0.50889,
+      "delta_percentage_points": 1.4449999999999963,
+      "R0_evaluation_seconds": 2685.4562165079988,
+      "CLIFF_evaluation_seconds": 939.574110167101,
+      "R0_source_basename": "20261101_070304_results.json",
+      "CLIFF_source_basename": "20261105_052524_results.json"
+    },
+    {
+      "task": "ai2d",
+      "split": "test",
+      "original": 3088,
+      "effective": 3088,
+      "limit": null,
+      "n_shot": 0,
+      "metric": "exact_match,flexible-extract",
+      "R0_score": 0.8215673575129534,
+      "CLIFF_score": 0.8435880829015544,
+      "delta_percentage_points": 2.2020725388601003,
+      "R0_evaluation_seconds": 6387.060540809995,
+      "CLIFF_evaluation_seconds": 2062.1028714480344,
+      "R0_source_basename": "20261101_074759_results.json",
+      "CLIFF_source_basename": "20261105_054113_results.json"
+    }
+  ],
+  "CLIFF_existing_summary_gpu_h": 3.506292836268743,
+  "observed_expert_tensor_count": 96,
+  "upstream_status": "Existing GPTAQ-MBQ tree has no readable git origin/toplevel from git probes, and no top-level *LICEN* file. Existing local THIRD_PARTY.md explicitly marks GPTAQ license to verify. It identifies MBQ as https://github.com/thu-nics/MBQ (MIT claim in doc only). GPTAQ-for-Vision upstream URL/license NOT established."
+}

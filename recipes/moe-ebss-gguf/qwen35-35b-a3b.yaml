@@ -1,0 +1,46 @@
+# MoE EBSS → imatrix text → (optional) llama.cpp GGUF
+# Primary showcase model (2026 switch from Qwen3-30B-A3B-Instruct-2507).
+# Cite MoEQuant for the EBSS algorithm; this repo ships an independent reimplementation.
+
+name: moe-ebss-gguf/qwen35-35b-a3b
+model:
+  adapter: hf_moe
+  # Prefer local mirror via QS_MODEL_ROOT; else HF hub id.
+  hf_id: Qwen/Qwen3.5-35B-A3B
+  local_path: ${env:QS_MODEL_ROOT}/Qwen3.5-35B-A3B
+  revision: main
+  dtype: bfloat16
+
+data:
+  # EBSS generates calib tokens; no external text corpus required for smoke.
+  seed: 0
+
+pipeline:
+  - stage: ebss_calib
+    num_seqs: 64
+    seqlen: 512
+    w: 4
+    tau: 1.2
+    temperature: 1.0
+    vocab_topk: 50
+    warmup_tokens: 3
+    trust_remote_code: false
+  - stage: text_export
+    format: imatrix_jsonl
+  # Optional downstream (requires llama.cpp binaries on PATH):
+  # - stage: llama_imatrix
+  # - stage: gguf_quantize
+  #     type: Q4_K_M
+  - stage: eval.expert_coverage
+    plot: true
+
+# Ablation twin: same DAG with random_text_calib instead of ebss_calib
+# (see recipes/moe-ebss-gguf/qwen35-35b-a3b-random.yaml). Do not headline
+# EBSS gains until that control is reported.
+
+expected:
+  status: phase1_eval_done  # WikiText-2 PPL + coverage logged (smoke scale)
+notes: |
+  GPU-host quantstage env produced EBSS + random 64x512 calib artifacts.
+  Staging entrypoint: staging/ebss/generate_calib.py.
+  Model weights live outside the repo (QS_MODEL_ROOT or HF cache).

@@ -1,0 +1,1 @@
+"""PTQKit primitives package (scaffold)."""
